@@ -20,7 +20,7 @@ user_role = PowerUser
 profile_name = accountN
 account_number = 512345114123
 user_role = Administrator
-<pre><code>
+</code></pre>
 
 In other words ...
   1. The default profile is for your main AWS account, where your users are stored
