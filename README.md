@@ -1,5 +1,7 @@
 ## awlogin
-Command line utility to facilitate AWS Secure CLI MFA Logons. After installing run `awlogin -h` to understand how this works.
+Command line utility to facilitate AWS Secure CLI MFA Logons.
+
+After installing run `awlogin -h` to understand how this works.
 
 ## Installation
   1. `git clone git@github.com:lencap/awlogin`
