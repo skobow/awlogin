@@ -134,10 +134,10 @@ def logon_to_aws (profile, token):
     os.environ['AWS_ACCESS_KEY_ID']     = cfg.get('default', 'aws_access_key_id')
     os.environ['AWS_SECRET_ACCESS_KEY'] = cfg.get('default', 'aws_secret_access_key')
 
-    # Get main account UserName. Also an implicit validation of the keys in default profile
+    # Get main account username. Also an implicit validation of the keys in default profile
     resource = boto3.resource('iam')
     try:
-        UserName = resource.CurrentUser().user_name
+        username = resource.CurrentUser().user_name
     except Exception:
         print("Error with AWS keys in", red2('default'), "profile.")
         sys.exit(1)
@@ -145,10 +145,10 @@ def logon_to_aws (profile, token):
     # Get main account ID
     # This is one of multiple ways to get the user's AWS account ID
     client = boto3.client('iam')
-    MainAccountId = client.get_user()['User']['Arn'].split(':')[4]
+    main_account_id = client.get_user()['User']['Arn'].split(':')[4]
 
     # Derived MFA Device ARN
-    MFADeviceARN = 'arn:aws:iam::' + MainAccountId + ':mfa/' + UserName
+    mfa_device_arn = 'arn:aws:iam::' + main_account_id + ':mfa/' + username
 
     # Do either main or federated account login, based on profile
     response = None
@@ -156,19 +156,19 @@ def logon_to_aws (profile, token):
     if profile == 'default':
         try:
             response = client.get_session_token(
-                DurationSeconds=86400,SerialNumber=MFADeviceARN,TokenCode=token
+                DurationSeconds=86400,SerialNumber=mfa_device_arn,TokenCode=token
             )
         except Exception as e:
             print(e)
             sys.exit(1)
     else:
-        TargetAccountId = cfg.get(profile, 'account_number')
-        UserRole = cfg.get(profile, 'user_role')
-        RoleARN = 'arn:aws:iam::' + TargetAccountId + ':role/' + UserRole
+        target_account_id = cfg.get(profile, 'account_number')
+        user_role = cfg.get(profile, 'user_role')
+        role_arn = 'arn:aws:iam::' + target_account_id + ':role/' + user_role
         try:
             response = client.assume_role(
-                RoleArn=RoleARN,RoleSessionName=UserName,DurationSeconds=3600,
-                SerialNumber=MFADeviceARN,TokenCode=token
+                RoleArn=role_arn,RoleSessionName=username,DurationSeconds=3600,
+                SerialNumber=mfa_device_arn,TokenCode=token
             )
         except Exception as e:
             print(e)
@@ -186,9 +186,15 @@ def logon_to_aws (profile, token):
 def get_aws_region ():
     AWS_REGION = ''
     # Start by checking the environment variables (order is important)
-    if os.environ.get('AWS_REGION') == None:
-        if os.environ.get('AMAZON_REGION') == None:
-            if os.environ.get('AWS_DEFAULT_REGION') == None:
+    try:
+        AWS_REGION = os.environ['AWS_REGION']
+    except Exception:
+        try:
+            AWS_REGION = os.environ['AMAZON_REGION']
+        except Exception:
+            try:
+                AWS_REGION = os.environ['AWS_DEFAULT_REGION']
+            except Exception:
                 # End with checking the AWS config file
                 if not os.path.isfile(AWS_CONFIG_FILE):  
                     print("AWS_REGION variable is not defined, and", AWS_CONFIG_FILE, "file does not exist.")
