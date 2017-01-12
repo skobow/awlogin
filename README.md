@@ -1,7 +1,29 @@
 ## awlogin
-Command line utility to facilitate AWS Secure CLI MFA Logons.
+Command line utility to facilitate AWS Secure CLI MFA Logons. 
 
-After installing run `awlogin -h` to understand how this works.
+Running `awlogin -h` show the following additional info:
+
+This utility facilitates secured CLI MFA authentication to any AWS account profile defined in ~/.aws/credentials. It expects that file to be formatted in the following sample manner:
+
+<pre><code>
+[default]
+profile_name = stag
+aws_access_key_id = AKERNEIDUFENICUQ3NDO
+aws_secret_access_key = ilsjkasdUEwlwDUgvD1b7234Fn/lepi0ACmk8upFy
+
+[prod]
+profile_name = prod
+account_number = 544492114123
+user_role = PowerUser
+<pre><code>
+
+In other words ...
+  1. The default profile is for your main AWS account, where your users are stored
+  2. All other profiles are treated as federated AWS accounts you may have access to
+  3. You must defined a valid key pair for your default profile
+  4. Each profile must have a unique profile_name so this utility can identify it
+  5. Each federated profile must have a valid account_number and user_role
+  6. The -c switch can create a fresh skeleton ~/.aws/credentials file
 
 ## Installation
   1. `git clone git@github.com:lencap/awlogin`
