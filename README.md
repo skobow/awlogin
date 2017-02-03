@@ -24,7 +24,7 @@ user_role = Administrator
 
 In other words ...
   1. The **default** profile is for your main AWS account, where your users are stored
-  2. All other profiles are treated as **federated** AWS accounts that you may have access to
+  2. All other profiles are treated as **federated** AWS accounts that you may have access to
   3. You **must** defined a valid key pair for your **default** profile
   4. Each profile must have a unique profile_name so this utility can identify it
   5. Each federated profile must have a valid **account_number** and **user_role**
