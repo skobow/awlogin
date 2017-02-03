@@ -30,6 +30,8 @@ In other words ...
   5. Each federated profile must have a valid **account_number** and **user_role**
   6. The `-c` switch can create a fresh skeleton `~/.aws/credentials` file
 
+**NOTE:** This utility introduces and uses the 3 new special variables (profile_name, account_number, and user_role) without breaking any of the original AWS `~/.aws/credentials` file functionality. If you find that it does, please let me know.
+
 ## Installation
   1. `git clone git@github.com:lencap/awlogin`
   2. `cd awlogin`
