@@ -1,9 +1,9 @@
 ## awlogin
 Command line utility to facilitate AWS Secure CLI MFA Logons. 
 
-Running `awlogin -h` show the following additional info:
-
 This utility facilitates secured CLI MFA authentication to any AWS account profile defined in `~/.aws/credentials`. The utility expects that file to be formatted in the following sample manner:
+
+Running `awlogin -h` show the following additional info:
 
 <pre><code>
 [default]
