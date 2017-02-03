@@ -38,6 +38,10 @@ In other words ...
 
 ## Usage
 
+To logon to one of your accounts run `awlogin stag TOKEN` where **stag** is one the **profile_name** defined in your `~/.aws/credentials` file, and **TOKEN** is a 6-digit number from your MFA device. If the logon is successful, it will drop you into a **subshell** from where you can run **awscli** commands. To further verify you've logged on, you can run `env | grep AWS` to view the **AWS_SESSION_TOKEN** environment variable that was generated for this specific session.
+
+Once you're done with your work, you can exit this subshell to return to your original shell. **Note that you can run this utility in different shell windows, thus allowing you the capability to logon to multiple accounts at the same time.**
+  
 ### Usage shell output
 <pre><code>
 $ awlogin
