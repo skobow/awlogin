@@ -13,14 +13,14 @@ except ImportError:
     from ConfigParser import ConfigParser  # For Python < 3.0
 
 # String colorization functions (defined as early as possible)
-def whi2 (s):
-    return '\033[1;37m' + s + '\033[0m'
+def whi2(string):
+    return '\033[1;37m' + string + '\033[0m'
 
-def whi1 (s):
-    return '\033[0;37m' + s + '\033[0m'
+def whi1(string):
+    return '\033[0;37m' + string + '\033[0m'
 
-def red2 (s):
-    return '\033[1;31m' + s + '\033[0m'
+def red2(string):
+    return '\033[1;31m' + string + '\033[0m'
 
 
 # Ensure these additional modules are also installed
@@ -45,7 +45,8 @@ SKELETON_CONF = "[default]\n"+ \
                 "user_role = PowerUser\n"
 
 
-def print_usage ():
+def print_usage():
+    """ Display program usage """
     print("AWS Secure CLI MFA Logon Utility v" + __version__ + "\n" + \
         whi1(PROG_NAME) + " PROFILE TOKEN   Logon to account PROFILE using 6-digit TOKEN\n" + \
         whi1(PROG_NAME) + " -l              List all account profiles in " + AWS_CREDS_FILEC + "\n" + \
@@ -54,7 +55,8 @@ def print_usage ():
     sys.exit(1)
 
 
-def print_help ():
+def print_help():
+    """ Display additional information """
     print("This utility facilitates secured CLI MFA authentication to any AWS account\n" + \
         "profile defined in " + AWS_CREDS_FILEC + ". It expects that file to be formatted\n" + \
         "in the following sample manner:\n\n" + \
@@ -69,7 +71,8 @@ def print_help ():
     sys.exit(1)
 
 
-def create_skeleton_config ():
+def create_skeleton_config():
+    """ Create basic configuration file """
     if os.path.isfile(AWS_CREDS_FILE):
         print("File", red2(AWS_CREDS_FILE), "already exists.")
     else:
@@ -78,7 +81,8 @@ def create_skeleton_config ():
     sys.exit(0)
 
 
-def list_accounts ():
+def list_accounts():
+    """ Dispaly list of account profiles in configuration file """
     cfg = ConfigParser()
     cfg.read(AWS_CREDS_FILE)
     for sect in cfg.sections():
@@ -89,7 +93,8 @@ def list_accounts ():
     sys.exit(0)
 
 
-def validate_config (profile):
+def validate_config(profile):
+    """ Check configuration file for anomalies """
     cfg = ConfigParser()
     cfg.read(AWS_CREDS_FILE)
 
@@ -126,7 +131,8 @@ def validate_config (profile):
     return selected_profile
 
 
-def logon_to_aws (profile, token):
+def logon_to_aws(profile, token):
+    """ Logon to AWS account designated by given profile, with given token """
     # In order to make any initial AWS API call we have to use the default profile credentials
     cfg = ConfigParser()
     cfg.read(AWS_CREDS_FILE)
@@ -183,33 +189,33 @@ def logon_to_aws (profile, token):
         sys.exit(0)
 
 
-def get_aws_region ():
+def get_aws_region():
+    """ Get the AWS region based on existing values """
     AWS_REGION = ''
     # Start by checking the environment variables (order is important)
-    try:
-        AWS_REGION = os.environ['AWS_REGION']
-    except Exception:
-        try:
-            AWS_REGION = os.environ['AMAZON_REGION']
-        except Exception:
-            try:
-                AWS_REGION = os.environ['AWS_DEFAULT_REGION']
-            except Exception:
-                # End with checking the AWS config file
-                if not os.path.isfile(AWS_CONFIG_FILE):  
-                    print("AWS_REGION variable is not defined, and", AWS_CONFIG_FILE, "file does not exist.")
-                    sys.exit(1)
-                cfg = ConfigParser()
-                cfg.read(AWS_CONFIG_FILE)
-                AWS_REGION = cfg.get('default', 'region')
+    if os.environ.get('AWS_REGION'):
+        AWS_REGION = os.environ.get('AWS_REGION')
+    elif os.environ.get('AMAZON_REGION'):
+        AWS_REGION = os.environ.get('AMAZON_REGION')
+    elif os.environ.get('AWS_DEFAULT_REGION'):
+        AWS_REGION = os.environ.get('AWS_DEFAULT_REGION')
+    else:
+        # End by checking the AWS config file
+        if not os.path.isfile(AWS_CONFIG_FILE):  
+            print("AWS_REGION variable is not defined, and", AWS_CONFIG_FILE, "file does not exist.")
+            sys.exit(1)
+        cfg = ConfigParser()
+        cfg.read(AWS_CONFIG_FILE)
+        AWS_REGION = cfg.get('default', 'region')
 
     if AWS_REGION == '':
         print("AWS_REGION variable is not defined anywhere.")
-        sys.exit(1) # Exit if it's not defined anywhere
+        sys.exit(1)
     return AWS_REGION
 
 
-def parse_arguments (argv):
+def parse_arguments(argv):
+    """ Parse arguments """    
     args = len(argv) - 1
     if args == 1:
         if argv[1] == '-c': # Create skeleton config file
@@ -237,7 +243,6 @@ def parse_arguments (argv):
 
 def main(args=None):
     """ Main program """
-
     parse_arguments(sys.argv)
     sys.exit(0)
 
