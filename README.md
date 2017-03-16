@@ -54,3 +54,5 @@ awlogin -h              Show additional help information
 
 ## Development notes
 To test run the program as soon as you clone the code, or as you make changes, you can use `python -m awlogin` from the root of the working directory.
+
+This utility uses the Python **boto3** SDK for AWS http://boto3.readthedocs.io/en/latest/guide/configuration.html
