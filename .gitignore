@@ -1,3 +1,9 @@
+# Golang files
+awlogin
+golibs
+*~
+*.swp
+
 # bundled / optimized / DLL files
 __pycache__/
 *.py[cod]
