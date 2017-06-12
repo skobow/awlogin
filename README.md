@@ -1,7 +1,7 @@
 ## awlogin
 This utility simplifies AWS MFA logons from the command line.
 
-This is the Python version. For the GoLang version go to https://github.com/lencap/awlogin-go. Writing it in two different languages was done to get more familiar with each language, but also with the respective AWS SDK.
+This is the original Python version. For the GoLang version go to https://github.com/lencap/awslogin. Wrote it in two different languages to get more familiar with each language, and the respective AWS SDK.
 
 This utilility allows CLI MFA authentication to any AWS account profile defined in `~/.aws/credentials`, but it expects that file to be formatted using 3 additional variables (read more below). Below is a example of how the `~/.aws/credentials` file should be formatted:
 
