@@ -4,7 +4,6 @@
 from __future__ import print_function
 import os
 import sys
-import subprocess
 from version import __version__
 
 try:
@@ -35,22 +34,16 @@ PROG_NAME = 'awlogin'
 AWS_CONFIG_FILE = os.path.join(os.environ['HOME'], '.aws/config')
 AWS_CREDS_FILE  = os.path.join(os.environ['HOME'], '.aws/credentials')
 AWS_CREDS_FILEC = whi1('~/.aws/credentials')
-SKELETON_CONF = "[default]\n"+ \
-                "profile_name = stag\n"+ \
-                "aws_access_key_id = AKERNEIDUFENICUQ3NDO\n"+ \
-                "aws_secret_access_key = ilsjkasdUEwlwDUgvD1b7234Fn/lepi0ACmk8upFy\n\n"+ \
-                "[prod]\n"+ \
-                "profile_name = prod\n"+ \
-                "account_number = 544492114123\n"+ \
-                "user_role = PowerUser\n"
 
+SKELETON_CONF = "[<PROFILE>]\n"+ \
+                "aws_access_key_id = AKERNEIDUFENICUQ3NDO\n"+ \
+                "aws_secret_access_key = ilsjkasdUEwlwDUgvD1b7234Fn/lepi0ACmk8upFy\n"
 
 def print_usage():
     """ Display program usage """
     print("AWS Secure CLI MFA Logon Utility v" + __version__ + "\n" + \
-        whi1(PROG_NAME) + " PROFILE TOKEN   Logon to account PROFILE using 6-digit TOKEN\n" + \
+        "Usage: " + whi1(PROG_NAME) + " PROFILE TOKEN\n\n" + \
         whi1(PROG_NAME) + " -l              List all account profiles in " + AWS_CREDS_FILEC + "\n" + \
-        whi1(PROG_NAME) + " -c              Create skeleton " + AWS_CREDS_FILEC + " file\n" + \
         whi1(PROG_NAME) + " -h              Show additional help information")
     sys.exit(1)
 
@@ -61,13 +54,11 @@ def print_help():
         "profile defined in " + AWS_CREDS_FILEC + ". It expects that file to be formatted\n" + \
         "in the following sample manner:\n\n" + \
         SKELETON_CONF + \
-        "\nSo ..." + \
-        "\n1. The", whi1('default'), "profile is for your main AWS account, where your users are stored" + \
-        "\n2. All other profiles are treated as", whi1('federated'), "AWS accounts you may have access to" + \
-        "\n3. You", whi1('must'), "defined a valid key pair for your", whi1('default'), "profile" + \
-        "\n4. Each profile must have a unique", whi1('profile_name'), "so this utility can identify it" + \
-        "\n5. Each federated profile must have a valid", whi1('account_number'), "and", whi1('user_role') + \
-        "\n6. The -c switch can create a fresh skeleton", AWS_CREDS_FILEC, "file")
+        "\n1. " + whi1('<PROFILE>') + "hold credentials for your AWS account" + \
+        "\n2. A valid key value pair" + whi1('has to be') + "defined for", whi1('<PROFILE>') + \
+        "\n3. The -c switch can create a fresh skeleton " + AWS_CREDS_FILEC + "file\n" + \
+        "\nYou can also provide the Amazon Rescource Name (ARN) by exporting AWS_MFA_DEVICE_ARN")
+
     sys.exit(1)
 
 
@@ -98,37 +89,18 @@ def validate_config(profile):
     cfg = ConfigParser()
     cfg.read(AWS_CREDS_FILE)
 
-    # Ensure there is only one default profile section
-    count = 0
-    for s in cfg.sections():
-        if s == 'default':
-            count += 1
-    if count > 1:
-        print("Too many", red2('default'), "profiles in", AWS_CREDS_FILEC)
+    # Ensure that specified section exists
+    if not cfg.has_section(profile):
+        print("Profile", red2(profile), "does not exist in", AWS_CREDS_FILEC)
         sys.exit(1)
 
-    # Ensure default profile section has mandatory entries
-    if 'aws_access_key_id' not in cfg.options('default') or \
-       'aws_secret_access_key' not in cfg.options('default'):
-        print("Profile", red2('default'), "is missing one or both credentials key entry")
+    # Ensure specified profile section has mandatory entries
+    if 'aws_access_key_id' not in cfg.options(profile) or \
+       'aws_secret_access_key' not in cfg.options(profile):
+        print("Profile", red2(profile), "is missing one or both credentials key entry")
         sys.exit(1)
 
-    # Locate profile section by matching user-specified profile with profile_name entry
-    count = 0
-    selected_profile = ''
-    for sect in cfg.sections():
-        if 'profile_name' in cfg.options(sect):
-            if profile.lower() == cfg.get(sect, 'profile_name').lower():
-                selected_profile = sect
-                count += 1
-    if count > 1:
-        print("Profile name", red2(profile), "is defined multiple times.")
-        sys.exit(1)     
-    if count == 0:
-        print("Profile name", red2(profile), "is not defined in", AWS_CREDS_FILEC)
-        sys.exit(1)
-
-    return selected_profile
+    return profile
 
 
 def logon_to_aws(profile, token):
@@ -137,56 +109,44 @@ def logon_to_aws(profile, token):
     cfg = ConfigParser()
     cfg.read(AWS_CREDS_FILE)
     os.environ['AWS_REGION']            = get_aws_region()
-    os.environ['AWS_ACCESS_KEY_ID']     = cfg.get('default', 'aws_access_key_id')
-    os.environ['AWS_SECRET_ACCESS_KEY'] = cfg.get('default', 'aws_secret_access_key')
+    os.environ['AWS_ACCESS_KEY_ID']     = cfg.get(profile, 'aws_access_key_id')
+    os.environ['AWS_SECRET_ACCESS_KEY'] = cfg.get(profile, 'aws_secret_access_key')
 
-    # Get main account username. Also an implicit validation of the keys in default profile
-    resource = boto3.resource('iam')
-    try:
-        username = resource.CurrentUser().user_name
-    except Exception:
-        print("Error with AWS keys in", red2('default'), "profile.")
-        sys.exit(1)
-
-    # Get main account ID
-    # This is one of multiple ways to get the user's AWS account ID
-    client = boto3.client('iam')
-    main_account_id = client.get_user()['User']['Arn'].split(':')[4]
-
-    # Derived MFA Device ARN
-    mfa_device_arn = 'arn:aws:iam::' + main_account_id + ':mfa/' + username
+    if os.environ.has_key('AWS_MFA_DEVICE_ARN'):
+        mfa_device_arn = os.environ['AWS_MFA_DEVICE_ARN']
+    else:
+        try:
+            mfa_device_arn = raw_input("MFA device arn:")
+        except KeyboardInterrupt:
+            sys.exit(1)
 
     # Do either main or federated account login, based on profile
     response = None
     client = boto3.client('sts')
-    if profile == 'default':
-        try:
-            response = client.get_session_token(
-                DurationSeconds=86400,SerialNumber=mfa_device_arn,TokenCode=token
-            )
-        except Exception as e:
-            print(e)
-            sys.exit(1)
-    else:
-        target_account_id = cfg.get(profile, 'account_number')
-        user_role = cfg.get(profile, 'user_role')
-        role_arn = 'arn:aws:iam::' + target_account_id + ':role/' + user_role
-        try:
-            response = client.assume_role(
-                RoleArn=role_arn,RoleSessionName=username,DurationSeconds=3600,
-                SerialNumber=mfa_device_arn,TokenCode=token
-            )
-        except Exception as e:
-            print(e)
-            sys.exit(1)
+    try:
+        response = client.get_session_token(
+            DurationSeconds=86400,SerialNumber=mfa_device_arn,TokenCode=token
+        )
+    except Exception as e:
+        print(e)
+        sys.exit(1)
 
     # Actual logon = update environment variables with newly acquired credentials
     if response:
-        os.environ['AWS_ACCESS_KEY_ID']     = response['Credentials']['AccessKeyId']
-        os.environ['AWS_SECRET_ACCESS_KEY'] = response['Credentials']['SecretAccessKey']
-        os.environ['AWS_SESSION_TOKEN']     = response['Credentials']['SessionToken']
-        subprocess.call('bash')  # Exit to a new shell
+        write_default_profile(profile + '_mfa', cfg, response['Credentials'])
         sys.exit(0)
+
+
+def write_default_profile(mfa_profile, cfg, credentials):
+    if not cfg.has_section(mfa_profile):
+        cfg.add_section(mfa_profile)
+
+    cfg.set(mfa_profile, 'aws_access_key_id', credentials['AccessKeyId'])
+    cfg.set(mfa_profile, 'aws_secret_access_key', credentials['SecretAccessKey'])
+    cfg.set(mfa_profile, 'aws_session_token', credentials['SessionToken'])
+
+    with open(AWS_CREDS_FILE, 'wb') as credentials_file:
+        cfg.write(credentials_file)
 
 
 def get_aws_region():
@@ -238,7 +198,7 @@ def parse_arguments(argv):
 
     # Validate credentials file settings, locate selected profile, then logon
     selected_profile = validate_config(profile)
-    logon_to_aws(selected_profile, token)
+    logon_to_aws(profile, token)
 
 
 def main(args=None):
