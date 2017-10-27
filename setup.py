@@ -1,6 +1,7 @@
 """ setup.py """
 
 from setuptools import setup, find_packages
+
 from awlogin.version import __version__
 
 with open('requirements.txt') as f:
@@ -11,9 +12,9 @@ setup(
     version=__version__,
     description='AWS Secure CLI MFA Logon Utility',
     long_description=open('README.md').read(),
-    author='Lenny Capellan',
-    author_email='lenny@tek.uno',
-    url='https://github.com/lencap/awlogin',
+    author='Sven Kobow',
+    author_email='sk@skobow.net',
+    url='https://github.com/skobow/awlogin',
     packages=find_packages(exclude=['tests*']),
     package_dir={'awlogin': 'awlogin'},
     license="MIT",
